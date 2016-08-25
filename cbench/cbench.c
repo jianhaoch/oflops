@@ -99,78 +99,78 @@ double run_test(int n_fakeswitches, struct fakeswitch * fakeswitches, int mstest
 /********************************************************************************/
 
 int timeout_connect(int fd, const char * hostname, int port, int mstimeout) {
-	int ret = 0;
-	int flags;
-	fd_set fds;
-	struct timeval tv;
-	struct addrinfo *res=NULL;
-	struct addrinfo hints;
-	char sport[BUFLEN];
-	int err;
+    int ret = 0;
+    int flags;
+    fd_set fds;
+    struct timeval tv;
+    struct addrinfo *res=NULL;
+    struct addrinfo hints;
+    char sport[BUFLEN];
+    int err;
 
-	hints.ai_flags          = 0;
-	hints.ai_family         = AF_INET;
-	hints.ai_socktype       = SOCK_STREAM;
-	hints.ai_protocol       = IPPROTO_TCP;
-	hints.ai_addrlen        = 0;
-	hints.ai_addr           = NULL;
-	hints.ai_canonname      = NULL;
-	hints.ai_next           = NULL;
+    hints.ai_flags          = 0;
+    hints.ai_family         = AF_INET;
+    hints.ai_socktype       = SOCK_STREAM;
+    hints.ai_protocol       = IPPROTO_TCP;
+    hints.ai_addrlen        = 0;
+    hints.ai_addr           = NULL;
+    hints.ai_canonname      = NULL;
+    hints.ai_next           = NULL;
 
-	snprintf(sport,BUFLEN,"%d",port);
+    snprintf(sport,BUFLEN,"%d",port);
 
-	err = getaddrinfo(hostname,sport,&hints,&res);
-	if(err|| (res==NULL))
-	{
-		if(res)
-			freeaddrinfo(res);
-		return -1;
-	}
-	
+    err = getaddrinfo(hostname,sport,&hints,&res);
+    if(err|| (res==NULL))
+    {
+        if(res)
+            freeaddrinfo(res);
+        return -1;
+    }
+    
 
 
-	// set non blocking
-	if((flags = fcntl(fd, F_GETFL)) < 0) {
-		fprintf(stderr, "timeout_connect: unable to get socket flags\n");
-		freeaddrinfo(res);
-		return -1;
-	}
-	if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-		fprintf(stderr, "timeout_connect: unable to put the socket in non-blocking mode\n");
-		freeaddrinfo(res);
-		return -1;
-	}
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
+    // set non blocking
+    if((flags = fcntl(fd, F_GETFL)) < 0) {
+        fprintf(stderr, "timeout_connect: unable to get socket flags\n");
+        freeaddrinfo(res);
+        return -1;
+    }
+    if(fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0) {
+        fprintf(stderr, "timeout_connect: unable to put the socket in non-blocking mode\n");
+        freeaddrinfo(res);
+        return -1;
+    }
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
 
-	if(mstimeout >= 0) 
-	{
-		tv.tv_sec = mstimeout / 1000;
-		tv.tv_usec = (mstimeout % 1000) * 1000;
+    if(mstimeout >= 0) 
+    {
+        tv.tv_sec = mstimeout / 1000;
+        tv.tv_usec = (mstimeout % 1000) * 1000;
 
-		errno = 0;
+        errno = 0;
 
-		if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) 
-		{
-			if((errno != EWOULDBLOCK) && (errno != EINPROGRESS))
-			{
-				fprintf(stderr, "timeout_connect: error connecting: %d\n", errno);
-				freeaddrinfo(res);
-				return -1;
-			}
-		}
-		ret = select(fd+1, NULL, &fds, NULL, &tv);
-	}
-	freeaddrinfo(res);
+        if(connect(fd, res->ai_addr, res->ai_addrlen) < 0) 
+        {
+            if((errno != EWOULDBLOCK) && (errno != EINPROGRESS))
+            {
+                fprintf(stderr, "timeout_connect: error connecting: %d\n", errno);
+                freeaddrinfo(res);
+                return -1;
+            }
+        }
+        ret = select(fd+1, NULL, &fds, NULL, &tv);
+    }
+    freeaddrinfo(res);
 
-	if(ret != 1) 
-	{
-		if(ret == 0)
-			return -1;
-		else
-			return ret;
-	}
-	return 0;
+    if(ret != 1) 
+    {
+        if(ret == 0)
+            return -1;
+        else
+            return ret;
+    }
+    return 0;
 }
 
 /********************************************************************************/
@@ -331,35 +331,35 @@ int main(int argc, char * argv[])
         }
     }
 
-	if(warmup+cooldown >=  tests_per_loop) {
-		fprintf(stderr, "Error warmup(%d) + cooldown(%d) >= number of tests (%d)\n", warmup, cooldown, tests_per_loop);
-		exit(1);
-	}
+    if(warmup+cooldown >=  tests_per_loop) {
+        fprintf(stderr, "Error warmup(%d) + cooldown(%d) >= number of tests (%d)\n", warmup, cooldown, tests_per_loop);
+        exit(1);
+    }
 
     fprintf(stderr, "cbench: controller benchmarking tool\n"
-                "   running in mode %s\n"
-                "   connecting to controller at %s:%d \n"
-                "   faking%s %d switches offset %d :: %d tests each; %d ms per test\n"
-                "   with %d unique source MACs per switch\n"
-                "   %s destination mac addresses before the test\n"
-                "   starting test with %d ms delay after features_reply\n"
-                "   ignoring first %d \"warmup\" and last %d \"cooldown\" loops\n"
-                "   connection delay of %dms per %d switch(es)\n"
-                "   debugging info is %s\n",
-                mode == MODE_THROUGHPUT? "'throughput'": "'latency'",
-                controller_hostname,
-                controller_port,
-                should_test_range ? " from 1 to": "",
-                n_fakeswitches,
-                dpid_offset,
-                tests_per_loop,
-                mstestlen,
-                total_mac_addresses,
-                learn_dst_macs ? "learning" : "NOT learning",
-                delay,
-                warmup,cooldown,
-                connect_delay,connect_group_size,
-                debug == 1 ? "on" : "off");
+        "   running in mode %s\n"
+        "   connecting to controller at %s:%d \n"
+        "   faking%s %d switches offset %d :: %d tests each; %d ms per test\n"
+        "   with %d unique source MACs per switch\n"
+        "   %s destination mac addresses before the test\n"
+        "   starting test with %d ms delay after features_reply\n"
+        "   ignoring first %d \"warmup\" and last %d \"cooldown\" loops\n"
+        "   connection delay of %dms per %d switch(es)\n"
+        "   debugging info is %s\n",
+        mode == MODE_THROUGHPUT? "'throughput'": "'latency'",
+        controller_hostname,
+        controller_port,
+        should_test_range ? " from 1 to": "",
+        n_fakeswitches,
+        dpid_offset,
+        tests_per_loop,
+        mstestlen,
+        total_mac_addresses,
+        learn_dst_macs ? "learning" : "NOT learning",
+        delay,
+        warmup,cooldown,
+        connect_delay,connect_group_size,
+        debug == 1 ? "on" : "off");
     /* done parsing args */
     fakeswitches = malloc(n_fakeswitches * sizeof(struct fakeswitch));
     assert(fakeswitches);
@@ -401,8 +401,8 @@ int main(int argc, char * argv[])
                 delay = 0;      // only delay on the first run
             v = 1000.0 * run_test(i+1, fakeswitches, mstestlen, delay);
             results[j] = v;
-			if(j<warmup || j >= tests_per_loop-cooldown) 
-				continue;
+            if(j<warmup || j >= tests_per_loop-cooldown) 
+                continue;
             sum += v;
             if (v > max)
               max = v;
@@ -410,7 +410,7 @@ int main(int argc, char * argv[])
               min = v;
         }
 
-		int counted_tests = (tests_per_loop - warmup - cooldown);
+        int counted_tests = (tests_per_loop - warmup - cooldown);
         // compute std dev
         double avg = sum / counted_tests;
         sum = 0.0;
@@ -422,9 +422,9 @@ int main(int argc, char * argv[])
 
         printf("RESULT: %d switches %d tests "
             "min/max/avg/stdev = %.2lf/%.2lf/%.2lf/%.2lf responses/s\n",
-                i+1,
-                counted_tests,
-                min, max, avg, std_dev);
+            i+1,
+            counted_tests,
+            min, max, avg, std_dev);
     }
 
     return 0;

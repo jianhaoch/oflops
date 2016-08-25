@@ -33,12 +33,13 @@ void fakeswitch_change_status_now (struct fakeswitch *fs, int new_status);
 void fakeswitch_change_status (struct fakeswitch *fs, int new_status);
 
 static struct ofp_switch_config Switch_config = {
-	.header = { 	OFP_VERSION,
-			OFPT_GET_CONFIG_REPLY,
-			sizeof(struct ofp_switch_config),
-			0},
-	.flags = 0,
-	.miss_send_len = 0,
+    .header = {
+        OFP_VERSION,
+        OFPT_GET_CONFIG_REPLY,
+        sizeof(struct ofp_switch_config),
+        0},
+    .flags = 0,
+    .miss_send_len = 0,
 };
 
 static inline uint64_t htonll(uint64_t n)
@@ -176,24 +177,24 @@ int fakeswitch_get_count(struct fakeswitch *fs)
 
 /***********************************************************************/
 static int parse_set_config(struct ofp_header * msg) {
-	struct ofp_switch_config * sc; 
-	assert(msg->type == OFPT_SET_CONFIG);
-	sc = (struct ofp_switch_config *) msg;
-	memcpy(&Switch_config, sc, sizeof(struct ofp_switch_config));
+    struct ofp_switch_config * sc; 
+    assert(msg->type == OFPT_SET_CONFIG);
+    sc = (struct ofp_switch_config *) msg;
+    memcpy(&Switch_config, sc, sizeof(struct ofp_switch_config));
 
-	return 0;
+    return 0;
 }
 
 
 /***********************************************************************/
 static int make_config_reply( int xid, char * buf, int buflen) {
-	int len = sizeof(struct ofp_switch_config);
-	assert(buflen >= len);
-	Switch_config.header.type = OFPT_GET_CONFIG_REPLY;
-	Switch_config.header.xid = xid;
-	memcpy(buf, &Switch_config, len);
+    int len = sizeof(struct ofp_switch_config);
+    assert(buflen >= len);
+    Switch_config.header.type = OFPT_GET_CONFIG_REPLY;
+    Switch_config.header.xid = xid;
+    memcpy(buf, &Switch_config, len);
 
-	return len;
+    return len;
 }
 
 /***********************************************************************/
@@ -277,16 +278,16 @@ static int make_vendor_reply(int xid, char * buf, int buflen)
 #endif
 
 static int packet_out_is_lldp(struct ofp_packet_out * po){
-	char * ptr = (char *) po;
-	ptr += sizeof(struct ofp_packet_out) + ntohs(po->actions_len);
-	struct ether_header * ethernet = (struct ether_header *) ptr;
-	unsigned short ethertype = ntohs(ethernet->ether_type);
-	if (ethertype == ETHERTYPE_VLAN) {
-		ethernet = (struct ether_header *) ((char *) ethernet) +4;
-		ethertype = ntohs(ethernet->ether_type);
-	}
-	
-	return ethertype == ETHERTYPE_LLDP;
+    char * ptr = (char *) po;
+    ptr += sizeof(struct ofp_packet_out) + ntohs(po->actions_len);
+    struct ether_header * ethernet = (struct ether_header *) ptr;
+    unsigned short ethertype = ntohs(ethernet->ether_type);
+    if (ethertype == ETHERTYPE_VLAN) {
+        ethernet = (struct ether_header *) ((char *) ethernet) +4;
+        ethertype = ntohs(ethernet->ether_type);
+    }
+    
+    return ethertype == ETHERTYPE_LLDP;
 }
 
 /***********************************************************************/
@@ -295,14 +296,14 @@ static int make_packet_in(int switch_id, int xid, int buffer_id, char * buf, int
     struct ofp_packet_in * pi;
     struct ether_header * eth;
     const char fake[] = {
-                0x97,0x0a,0x00,0x52,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
-		0x01,0x00,0x40,0x00,0x01,0x00,0x00,0x80,0x00,0x00,0x00,
-		0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x02,0x08,0x00,0x45,
-		0x00,0x00,0x32,0x00,0x00,0x00,0x00,0x40,0xff,0xf7,0x2c,
-		0xc0,0xa8,0x00,0x28,0xc0,0xa8,0x01,0x28,0x7a,0x18,0x58,
-                0x6b,0x11,0x08,0x97,0xf5,0x19,0xe2,0x65,0x7e,0x07,0xcc,
-                0x31,0xc3,0x11,0xc7,0xc4,0x0c,0x8b,0x95,0x51,0x51,0x33,
-                0x54,0x51,0xd5,0x00,0x36};
+        0x97,0x0a,0x00,0x52,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
+        0x01,0x00,0x40,0x00,0x01,0x00,0x00,0x80,0x00,0x00,0x00,
+        0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x02,0x08,0x00,0x45,
+        0x00,0x00,0x32,0x00,0x00,0x00,0x00,0x40,0xff,0xf7,0x2c,
+        0xc0,0xa8,0x00,0x28,0xc0,0xa8,0x01,0x28,0x7a,0x18,0x58,
+        0x6b,0x11,0x08,0x97,0xf5,0x19,0xe2,0x65,0x7e,0x07,0xcc,
+        0x31,0xc3,0x11,0xc7,0xc4,0x0c,0x8b,0x95,0x51,0x51,0x33,
+        0x54,0x51,0xd5,0x00,0x36};
     assert(buflen> sizeof(fake));
     memcpy(buf, fake, sizeof(fake));
     pi = (struct ofp_packet_in *) buf;
@@ -403,18 +404,18 @@ void fakeswitch_handle_read(struct fakeswitch *fs)
             case OFPT_SET_CONFIG:
                 // pull msgs out of buffer
                 debug_msg(fs, "parsing set_config");
-		parse_set_config(ofph);
+        parse_set_config(ofph);
                 break;
             case OFPT_GET_CONFIG_REQUEST:
                 // pull msgs out of buffer
                 debug_msg(fs, "got get_config_request");
                 count = make_config_reply(ofph->xid, buf, BUFLEN);
                 msgbuf_push(fs->outbuf, buf, count);
-		if ((fs->mode == MODE_LATENCY)  && ( fs->probe_state == 1 )) {     
-		    fs->probe_state = 0;       // restart probe state b/c some 
-					       // controllers block on config
-                	debug_msg(fs, "reset probe state b/c of get_config_reply");
-		}
+                if ((fs->mode == MODE_LATENCY)  && ( fs->probe_state == 1 )) {     
+                    fs->probe_state = 0;       // restart probe state b/c some 
+                    // controllers block on config
+                    debug_msg(fs, "reset probe state b/c of get_config_reply");
+                }
                 debug_msg(fs, "sent get_config_reply");
                 break;
             case OFPT_VENDOR:
@@ -454,22 +455,22 @@ void fakeswitch_handle_read(struct fakeswitch *fs)
                     debug_msg(fs, "sent description stats_reply");
                     if ((fs->mode == MODE_LATENCY)  && ( fs->probe_state == 1 )) {     
                         fs->probe_state = 0;       // restart probe state b/c some 
-                                       // controllers block on config
-                                debug_msg(fs, "reset probe state b/c of desc_stats_request");
+                        // controllers block on config
+                        debug_msg(fs, "reset probe state b/c of desc_stats_request");
                     }
                 } else {
                     debug_msg(fs, "Silently ignoring non-desc stats_request msg\n");
                 }
                 break;
             default: 
-    //            if(fs->debug)
-                    fprintf(stderr, "Ignoring OpenFlow message type %d\n", ofph->type);
+                fprintf(stderr, "Ignoring OpenFlow message type %d\n", ofph->type);
+                break;
         };
         if(fs->probe_state < 0)
         {
-                debug_msg(fs, "WARN: Got more responses than probes!!: : %d",
-                            fs->probe_state);
-                fs->probe_state =0;
+            debug_msg(fs, "WARN: Got more responses than probes!!: : %d",
+                      fs->probe_state);
+            fs->probe_state =0;
         }
     }
 }

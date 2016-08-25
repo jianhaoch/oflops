@@ -39,14 +39,26 @@ struct fakeswitch
     int current_mac_address;
     int learn_dstmac;
     int current_buffer_id;
+
+    // shock add for throughput sending rate control
+    int throughput_once_send_left;
+    struct timeval stamp;
+
+    int send_count;
+
+    // shock add for ip prefix index
+    int ip_index;
+    int ip_num;
 };
+
+int global_switch_num;
+int global_packet_send_num;
 
 /*** Initialize an already allocated fakeswitch
  * Fill in all of the parameters, 
  *  exchange OFP_HELLO, block waiting on features_request
  *  and send features reply
  * @param fs        Pointer to a fakeswitch
- * @param dpid      DPID
  * @param sock      A non-blocking socket already connected to 
  *                          the controller (will be non-blocking on return)
  * @param bufsize   The initial in and out buffer size
@@ -55,7 +67,6 @@ struct fakeswitch
  *                                 to use for packet ins from this switch
  */
 void fakeswitch_init(struct fakeswitch *fs, int dpid, int sock, int bufsize, int debug, int delay, enum test_mode mode, int total_mac_addresses, int learn_dstmac);
-
 
 /*** Set the desired flags for poll()
  * @param fs    Pointer to initalized fakeswitch
@@ -71,14 +82,13 @@ void fakeswitch_set_pollfd(struct fakeswitch *fs, struct pollfd *pfd);
  *      if it's a flow_mod, then incremenet count
  *      else ignore it
  * @param fs    Pointer to initalized fakeswitch
- * @param pfd   Pointer to an allocated poll structure
+ * @param pfd   Pointer to an allocated poll structure or the number of events as int
  */
-void fakeswitch_handle_io(struct fakeswitch *fs, const struct pollfd *pfd);
-
+void fakeswitch_handle_io(struct fakeswitch *fs, void* pfd_events);
 /**** Get and reset count 
  * @param fs    Pointer to initialized fakeswitch
  * @return      Number of flow_mod responses since last call
  */
 int fakeswitch_get_count(struct fakeswitch *fs);
-
+int fakeswitch_get_send_count(struct fakeswitch *fs);
 #endif
